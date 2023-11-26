@@ -130,8 +130,7 @@ getFlipPattern DontCare = repeat False
 main :: IO ()
 main = do
   let filePath = "C:/Users/aliek/Desktop/hello.txt"  -- Replace with your actual file path
-  let booleanContents = BooleanFileContents [(Byte [True], Byte [True]), (Byte [False], Byte [False])]
-  let allTruthTables = generateKMapExpression ( head (createTruthTablesForByte booleanContents))
+  allTruthTables <- strToNum filePath
   print allTruthTables
 
 
