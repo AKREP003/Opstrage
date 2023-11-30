@@ -1,6 +1,8 @@
 import Numeric
 import Data.Char
-import Data.List (nub, sort, group, find)
+import Prelude
+import Data.Hashable
+import Data.HashMap.Strict hiding (map)
 
 newtype Byte = Byte [Bool] deriving (Show, Eq, Ord)
 
@@ -23,7 +25,8 @@ intToBinaryTuple x =
     let binaryStr = showIntAtBase 2 intToDigit x ""
         paddedBinaryStr = replicate (8 - length binaryStr) '0' ++ binaryStr
         bits = map (== '1') paddedBinaryStr
-    in Byte bits
+    in Byte (reverse bits)  -- Reverse the bits to match the expected representation
+
 
 addIndex :: [Byte] -> [(Byte, Byte)]
 addIndex = zip (map intToBinaryTuple [0..])
@@ -43,96 +46,59 @@ createTruthTablesForByte (BooleanFileContents content) =
   [createTruthTableForBit bitPos (BooleanFileContents content) | bitPos <- [0 .. length (getBit (fst (head content))) - 1]]
 
 -- k-map
+filterTruth :: TruthTable -> [Byte]
+filterTruth (TruthTable []) = []
+filterTruth (TruthTable ((b, o):t))
+  | o = [b] ++ filterTruth (TruthTable t)
+  | otherwise = filterTruth (TruthTable t)
 
-adjustSize :: Int -> [Bool] -> [Bool] -> Byte -> Byte
-adjustSize inputSize relevancePattern flipPattern (Byte bits) =
-  let adjustedBits = take inputSize (zipWith3 (\bit rel flip -> bit /= (rel && flip)) bits relevancePattern flipPattern ++ repeat False)
-  in Byte adjustedBits
+hashTohash :: HashMap Int Int -> HashMap Int Int
+hashTohash n = n
 
-data TruthValue = TrueValue | FalseValue | DontCare deriving (Eq, Show)
+logDif :: HashMap Int Int -> Int -> HashMap Int Int
+logDif h n = insert n (findWithDefault 0 n h + 1) h -- With poor documentation, comes great frustration -yoda the senior dev
 
-data KMapEntry = KMapEntry { kmapInput :: Byte, kmapOutput :: TruthValue } deriving (Show, Eq)
-type KMapGroup = [KMapEntry]
-
-groupByInputPattern :: KMapGroup -> [KMapGroup] -> [KMapGroup]
-groupByInputPattern [] groups = groups
-groupByInputPattern entry groups =
-  let matchingGroup = findMatchingGroup (head entry) groups
-      updatedGroups = case matchingGroup of
-        Just group -> updateGroup (head entry) group groups
-        Nothing -> entry : groups
-  in updatedGroups
-
-findMatchingGroup :: KMapEntry -> [KMapGroup] -> Maybe KMapGroup
-findMatchingGroup entry = find (\group -> hasSameInputPattern entry group)
-
-hasSameInputPattern :: KMapEntry -> KMapGroup -> Bool
-hasSameInputPattern entry group = all (\otherEntry -> kmapInput entry == kmapInput otherEntry) group
-
-updateGroup :: KMapEntry -> KMapGroup -> [KMapGroup] -> [KMapGroup]
-updateGroup entry group groups =
-  let updatedGroup = entry : group
-  in updatedGroup : filter (/= group) groups
-
--- Function to generate the simplified expression from a TruthTable
-generateKMapExpression :: TruthTable -> Statement
-generateKMapExpression (TruthTable entries) =
-  let sortedEntries = sort entries
-      kmapEntries = map truthToKMapEntry sortedEntries
-      groupedEntries = groupByInputPattern kmapEntries []
-      expressions = concatMap groupToExpression groupedEntries
-  in Statement expressions
+encodeByte :: Byte -> Int -> [Int]
+encodeByte (Byte []) _  = []
+encodeByte (Byte (x:n)) las 
+  | x = [las] ++ encodeByte (Byte n) (las * 2)
+  | otherwise = [1 + las] ++ encodeByte (Byte n) (las * 2)
 
 
-truthToKMapEntry :: (Byte, Bool) -> KMapEntry
-truthToKMapEntry (inputPattern, outputValue) = KMapEntry inputPattern (boolToTruthValue outputValue)
-
-boolToTruthValue :: Bool -> TruthValue
-boolToTruthValue True = TrueValue
-boolToTruthValue False = FalseValue
-
--- Function to adjust the size of the output pattern in a group
-adjustGroupSize :: KMapGroup -> KMapGroup
-adjustGroupSize group =
-  let inputSize = length (getBit (kmapInput (head group)))
-      relevancePattern = getBit (kmapInput (head group))
-      flipPattern = getFlipPattern (kmapOutput (head group))
-  in map (\entry -> entry { kmapInput = adjustSize inputSize relevancePattern flipPattern (kmapInput entry) }) group
-
-
-
-groupToExpression :: KMapGroup -> [Expression]
-groupToExpression group =
-  if null group
-    then [Expression (Byte [], Byte [])]  -- Adjust as needed for an empty group
-    else
-      let adjustedGroup = adjustGroupSize group
-          inputPatterns = map kmapInput adjustedGroup
-          outputPatterns = map (outputToValue . kmapOutput) adjustedGroup
-      in [Expression (inputPattern, outputPattern) | (inputPattern, outputPattern) <- zip inputPatterns outputPatterns]
-
-outputToValue :: TruthValue -> Byte
-outputToValue TrueValue = Byte [True]
-outputToValue FalseValue = Byte [False]
-outputToValue DontCare = Byte [False]  -- Adjust as needed
-
-getFlipPattern :: TruthValue -> [Bool]
-getFlipPattern TrueValue = repeat True
-getFlipPattern FalseValue = repeat False
-getFlipPattern DontCare = repeat False
+logEmAll :: HashMap Int Int -> [Int] -> HashMap Int Int
+logEmAll h [] = h
+logEmAll h (x:n) = logEmAll (logDif h x) n
 
 
 
 
+storeDifs :: [Byte] -> HashMap Int Int -> HashMap Int Int
+storeDifs  [] n = n
+storeDifs (x:t) difs = storeDifs t (logEmAll difs (encodeByte x 2))
 
 
+filterDif :: [(Int, Int)] -> [(Int, Int)] -> Int -> [(Int, Int)]
+filterDif ((x, occurance):rest) basket upperLimit
+  | x < upperLimit = []
+--analyzeTruth :: Byte -> TruthTable -> Expression
+
+
+
+ifNatural :: Int -> Bool
+ifNatural n =  
+  let lg = logBase 2 (fromIntegral n)
+  in lg == ((fromIntegral . floor) (lg))
 
 main :: IO ()
 main = do
-  let filePath = "C:/Users/aliek/Desktop/hello.txt"  -- Replace with your actual file path
-  allTruthTables <- strToNum filePath
-  print allTruthTables
+  --let filePath = "C:/Users/aliek/Desktop/hello.txt"  -- Replace with your actual file path
+  --allTruthTables <- strToNum filePath
+  
+  --let idk = createTruthTablesForByte allTruthTables
+  --let t = filterTruth (head idk)
+  
+  print  (ifNatural 7)
+  
+  -- print (hashTohash (storeDifs [Byte [True, False, True], Byte [True, True, True]] empty))
 
-
---TruthTable [(Byte [True,True,True],True),(Byte [True,False,True],False)]
---Statement [Expression (Byte [True,False,True],Byte [False]),Expression (Byte [True,True,True],Byte [True])]
+--[Byte [True,False,False,False,False,False,False,False],Byte [False,True,False,False,False,False,False,False]]
