@@ -64,9 +64,9 @@ boolToBase3 n d
  | n = d * 2
  | otherwise = d
 
-encodeByte :: Byte -> Int -> [Int] -- Find a way to encode every fact about a Byte. and turn them into a list. Maybe base 3 
+encodeByte :: Byte -> Int -> [Int] -- Find a way to encode every fact about a Byte. and turn them into a list. Maybe base 3
 encodeByte (Byte []) _  = [0]
-encodeByte (Byte (x:n)) las  = 
+encodeByte (Byte (x:n)) las  =
   let r = encodeByte (Byte n) (las * 3)
   in (map (+ (boolToBase3 x las)) r) ++ r
 
@@ -89,9 +89,10 @@ isPowerOf2 n =
 filterDif :: [(Int, Int)] -> [Int]
 filterDif []  = []
 filterDif ((x, occurance):rest)
-  | not ((fromIntegral byte_len - ( (isPowerOf2 x ) )) == (fromIntegral (div occurance 2)) ) = filterDif rest 
-  | otherwise = x : filterDif rest 
- 
+  | x == 1 = x : filterDif rest
+  | not ((fromIntegral byte_len - ( (isPowerOf2 x ) )) == (fromIntegral (div occurance 2)) ) = filterDif rest
+  | otherwise = x : filterDif rest
+
 
 
 storeOccurence :: [(Int, Int)] ->  HashMap Int Int -> HashMap Int Int
@@ -102,10 +103,10 @@ storeOccurence ((_, o):n) h = storeOccurence n (logDif h o)
 
 survivalOfTheFittest :: [Int] -> [(Int, Int)] -> [Int]
 survivalOfTheFittest _ [] = []
-survivalOfTheFittest fit ((x, o):n) 
+survivalOfTheFittest fit ((x, o):n)
  | o `elem` fit  = x : survivalOfTheFittest fit n
  | otherwise = survivalOfTheFittest fit n
- 
+
 main :: IO ()
 main = do
   --let filePath = "C:/Users/aliek/Desktop/hello.txt"  -- Replace with your actual file path
@@ -116,25 +117,22 @@ main = do
   
   --print  (isPowerOf2 7)
   -- (filterDif (toList (storeDifs [Byte [True, False, True], Byte [True, False, True], Byte [False, True, True]] empty)) [] 0)
-  
+
   -- [Byte [True, False, True], Byte [True, True, True], Byte [True, False, False], Byte [True, True, False] ]
 
-  let k = toList (storeDifs [Byte [True, False, True], Byte [True, True, True], Byte [True, False, False], Byte [True, True, False]] empty)
-  
+  let k = toList (storeDifs [Byte [True, False, True]] empty)
+
   let st = storeOccurence k empty
-  
-  print (k)
-  
-  print (st)
-  
+
   let fittest = (filterDif . toList) (st)
-  
-  print fittest
-  
+
+  print k
+  print st
+
   print (maximum (survivalOfTheFittest ( fittest) k))
-  
-  
-  
+
+
+
   --print (encodeByte (Byte [True, False, True]) 1)
 
 
