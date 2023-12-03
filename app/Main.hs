@@ -119,23 +119,11 @@ main = do
   --allTruthTables <- strToNum filePath
   
   --let idk = createTruthTablesForByte allTruthTables
-  let t = filterTruth (TruthTable [(Byte [True, False, True], True)])
-  
-  let j = toList (storeDifs t empty)
+  let t = TruthTable [(Byte [True, False, True], True)]
   
 
-  -- [Byte [True, False, True], Byte [True, True, True], Byte [True, False, False], Byte [True, True, False] ]
 
-  let k = toList (storeDifs t empty)
-
-  let st = storeOccurence k empty
-
-  let fittest = (filterDif . toList) st
-
-  print k
-  print st
-
-  print (maximum (survivalOfTheFittest ( fittest) k))
+  print (k_map t)
 
 
 
