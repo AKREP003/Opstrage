@@ -107,24 +107,30 @@ survivalOfTheFittest fit ((x, o):n)
  | o `elem` fit  = x : survivalOfTheFittest fit n
  | otherwise = survivalOfTheFittest fit n
 
+
+k_map :: TruthTable -> Int
+k_map n =
+  let k = (toList ( storeDifs (filterTruth n) empty))
+  in (maximum ) ( survivalOfTheFittest  (( filterDif . toList) (storeOccurence k empty) ) k)
+
 main :: IO ()
 main = do
   --let filePath = "C:/Users/aliek/Desktop/hello.txt"  -- Replace with your actual file path
   --allTruthTables <- strToNum filePath
   
   --let idk = createTruthTablesForByte allTruthTables
-  --let t = filterTruth (head idk)
+  let t = filterTruth (TruthTable [(Byte [True, False, True], True)])
   
-  --print  (isPowerOf2 7)
-  -- (filterDif (toList (storeDifs [Byte [True, False, True], Byte [True, False, True], Byte [False, True, True]] empty)) [] 0)
+  let j = toList (storeDifs t empty)
+  
 
   -- [Byte [True, False, True], Byte [True, True, True], Byte [True, False, False], Byte [True, True, False] ]
 
-  let k = toList (storeDifs [Byte [True, False, True]] empty)
+  let k = toList (storeDifs t empty)
 
   let st = storeOccurence k empty
 
-  let fittest = (filterDif . toList) (st)
+  let fittest = (filterDif . toList) st
 
   print k
   print st
