@@ -14,6 +14,9 @@ newtype Expression = Expression (Byte, Byte) deriving Show
 
 newtype Statement = Statement [Expression] deriving Show
 
+byte_len :: Int
+byte_len = 3
+
 -- Parse
 strToNum :: FilePath -> IO BooleanFileContents
 strToNum filePath =  do
@@ -23,7 +26,7 @@ strToNum filePath =  do
 intToBinaryTuple :: Int -> Byte
 intToBinaryTuple x =
     let binaryStr = showIntAtBase 2 intToDigit x ""
-        paddedBinaryStr = replicate (8 - length binaryStr) '0' ++ binaryStr
+        paddedBinaryStr = replicate (byte_len - length binaryStr) '0' ++ binaryStr
         bits = map (== '1') paddedBinaryStr
     in Byte (reverse bits)  -- Reverse the bits to match the expected representation
 
@@ -52,8 +55,6 @@ filterTruth (TruthTable ((b, o):t))
   | o = [b] ++ filterTruth (TruthTable t)
   | otherwise = filterTruth (TruthTable t)
 
-hashTohash :: HashMap Int Int -> HashMap Int Int
-hashTohash n = n
 
 logDif :: HashMap Int Int -> Int -> HashMap Int Int
 logDif h n = insert n (findWithDefault 0 n h + 1) h -- With poor documentation, comes great frustration -yoda the senior dev
@@ -69,25 +70,32 @@ logEmAll :: HashMap Int Int -> [Int] -> HashMap Int Int
 logEmAll h [] = h
 logEmAll h (x:n) = logEmAll (logDif h x) n
 
-
-
-
 storeDifs :: [Byte] -> HashMap Int Int -> HashMap Int Int
 storeDifs  [] n = n
 storeDifs (x:t) difs = storeDifs t (logEmAll difs (encodeByte x 2))
 
+isPowerOf2 :: Int -> Float
+isPowerOf2 n =
+  let lg = logBase 2 (fromIntegral n)
+  in lg
 
-filterDif :: [(Int, Int)] -> [(Int, Int)] -> Int -> [(Int, Int)]
-filterDif ((x, occurance):rest) basket upperLimit
-  | x < upperLimit = []
+
+
+filterDif :: [(Int, Int)] -> [Int]
+filterDif []  = []
+filterDif ((x, occurance):rest)
+  | not ((((fromIntegral byte_len) - (isPowerOf2 x ) ) <= (fromIntegral occurance)) ) = filterDif rest 
+  | otherwise = x : filterDif rest 
+ 
+
+
+storeOccurence :: [(Int, Int)] ->  HashMap Int Int -> HashMap Int Int
+storeOccurence [] h = h
+storeOccurence ((_, o):n) h = storeOccurence n (logDif h o)
 --analyzeTruth :: Byte -> TruthTable -> Expression
 
 
 
-ifNatural :: Int -> Bool
-ifNatural n =  
-  let lg = logBase 2 (fromIntegral n)
-  in lg == ((fromIntegral . floor) (lg))
 
 main :: IO ()
 main = do
@@ -97,8 +105,19 @@ main = do
   --let idk = createTruthTablesForByte allTruthTables
   --let t = filterTruth (head idk)
   
-  print  (ifNatural 7)
+  --print  (isPowerOf2 7)
+  -- (filterDif (toList (storeDifs [Byte [True, False, True], Byte [True, False, True], Byte [False, True, True]] empty)) [] 0)
+
+  let k = toList (storeDifs [Byte [True, False, True], Byte [True, True, True], Byte [True, True, False], Byte [True, False, False]] empty)
   
-  -- print (hashTohash (storeDifs [Byte [True, False, True], Byte [True, True, True]] empty))
+  let st = storeOccurence k empty
+  
+  print (k)
+  
+  print (st)
+  
+  let survivalOfTheFittest = (filterDif . toList) (st)
+  
+  print (survivalOfTheFittest)
 
 --[Byte [True,False,False,False,False,False,False,False],Byte [False,True,False,False,False,False,False,False]]
