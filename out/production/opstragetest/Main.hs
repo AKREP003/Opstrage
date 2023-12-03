@@ -59,11 +59,16 @@ filterTruth (TruthTable ((b, o):t))
 logDif :: HashMap Int Int -> Int -> HashMap Int Int
 logDif h n = insert n (findWithDefault 0 n h + 1) h -- With poor documentation, comes great frustration -yoda the senior dev
 
-encodeByte :: Byte -> Int -> [Int]
-encodeByte (Byte []) _  = []
-encodeByte (Byte (x:n)) las 
-  | x = [las] ++ encodeByte (Byte n) (las * 2)
-  | otherwise = [1 + las] ++ encodeByte (Byte n) (las * 2)
+boolToBase3 :: Bool -> Int -> Int
+boolToBase3 n d
+ | n = d * 2
+ | otherwise = d
+
+encodeByte :: Byte -> Int -> [Int] -- Find a way to encode every fact about a Byte. and turn them into a list. Maybe base 3 
+encodeByte (Byte []) _  = [0]
+encodeByte (Byte (x:n)) las  = 
+  let r = encodeByte (Byte n) (las * 3)
+  in (map (+ (boolToBase3 x las)) r) ++ r
 
 
 logEmAll :: HashMap Int Int -> [Int] -> HashMap Int Int
@@ -72,7 +77,7 @@ logEmAll h (x:n) = logEmAll (logDif h x) n
 
 storeDifs :: [Byte] -> HashMap Int Int -> HashMap Int Int
 storeDifs  [] n = n
-storeDifs (x:t) difs = storeDifs t (logEmAll difs (encodeByte x 2))
+storeDifs (x:t) difs = storeDifs t (logEmAll difs (encodeByte x 1))
 
 isPowerOf2 :: Int -> Float
 isPowerOf2 n =
@@ -84,7 +89,7 @@ isPowerOf2 n =
 filterDif :: [(Int, Int)] -> [Int]
 filterDif []  = []
 filterDif ((x, occurance):rest)
-  | not ((((fromIntegral byte_len) - (isPowerOf2 x ) ) <= (fromIntegral occurance)) ) = filterDif rest 
+  | not ((fromIntegral byte_len - ( (isPowerOf2 x ) )) == (fromIntegral (div occurance 2)) ) = filterDif rest 
   | otherwise = x : filterDif rest 
  
 
@@ -95,10 +100,10 @@ storeOccurence ((_, o):n) h = storeOccurence n (logDif h o)
 --analyzeTruth :: Byte -> TruthTable -> Expression
 
 
-survivalOfTheFittest :: Int -> [(Int, Int)] -> [Int]
+survivalOfTheFittest :: [Int] -> [(Int, Int)] -> [Int]
 survivalOfTheFittest _ [] = []
 survivalOfTheFittest fit ((x, o):n) 
- | fit == o = x : survivalOfTheFittest fit n
+ | o `elem` fit  = x : survivalOfTheFittest fit n
  | otherwise = survivalOfTheFittest fit n
  
 main :: IO ()
@@ -111,8 +116,10 @@ main = do
   
   --print  (isPowerOf2 7)
   -- (filterDif (toList (storeDifs [Byte [True, False, True], Byte [True, False, True], Byte [False, True, True]] empty)) [] 0)
+  
+  -- [Byte [True, False, True], Byte [True, True, True], Byte [True, False, False], Byte [True, True, False] ]
 
-  let k = toList (storeDifs [Byte [False, False, False], Byte [True, True, True]] empty)
+  let k = toList (storeDifs [Byte [True, False, True], Byte [True, True, True], Byte [True, False, False], Byte [True, True, False]] empty)
   
   let st = storeOccurence k empty
   
@@ -122,6 +129,13 @@ main = do
   
   let fittest = (filterDif . toList) (st)
   
-  print (survivalOfTheFittest (maximum fittest) k)
+  print fittest
+  
+  print (maximum (survivalOfTheFittest ( fittest) k))
+  
+  
+  
+  --print (encodeByte (Byte [True, False, True]) 1)
+
 
 --[Byte [True,False,False,False,False,False,False,False],Byte [False,True,False,False,False,False,False,False]]
