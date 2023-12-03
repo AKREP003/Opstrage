@@ -95,8 +95,12 @@ storeOccurence ((_, o):n) h = storeOccurence n (logDif h o)
 --analyzeTruth :: Byte -> TruthTable -> Expression
 
 
-
-
+survivalOfTheFittest :: Int -> [(Int, Int)] -> [Int]
+survivalOfTheFittest _ [] = []
+survivalOfTheFittest fit ((x, o):n) 
+ | fit == o = x : survivalOfTheFittest fit n
+ | otherwise = survivalOfTheFittest fit n
+ 
 main :: IO ()
 main = do
   --let filePath = "C:/Users/aliek/Desktop/hello.txt"  -- Replace with your actual file path
@@ -108,7 +112,7 @@ main = do
   --print  (isPowerOf2 7)
   -- (filterDif (toList (storeDifs [Byte [True, False, True], Byte [True, False, True], Byte [False, True, True]] empty)) [] 0)
 
-  let k = toList (storeDifs [Byte [True, False, True], Byte [True, True, True], Byte [True, True, False], Byte [True, False, False]] empty)
+  let k = toList (storeDifs [Byte [False, False, False], Byte [True, True, True]] empty)
   
   let st = storeOccurence k empty
   
@@ -116,8 +120,8 @@ main = do
   
   print (st)
   
-  let survivalOfTheFittest = (filterDif . toList) (st)
+  let fittest = (filterDif . toList) (st)
   
-  print (survivalOfTheFittest)
+  print (survivalOfTheFittest (maximum fittest) k)
 
 --[Byte [True,False,False,False,False,False,False,False],Byte [False,True,False,False,False,False,False,False]]
