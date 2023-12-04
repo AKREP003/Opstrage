@@ -9,11 +9,11 @@ newtype Byte = Byte [Bool] deriving (Show, Eq, Ord)
 
 newtype BooleanFileContents = BooleanFileContents [(Byte, Byte)] deriving Show
 
-newtype TruthTable = TruthTable [(Byte, Bool)] deriving Show
+newtype TruthTable = TruthTable [(Byte, Bool)] deriving (Eq, Show)
 
-newtype Expression = Expression (Byte, Byte) deriving Show
+newtype Expression = Expression (Byte, Byte) deriving (Eq, Show)
 
-newtype Statement = Statement [Expression] deriving Show
+newtype Statement = Statement [Expression] deriving (Eq, Show)
 
 byte_len :: Int
 byte_len = 3
@@ -86,13 +86,18 @@ isPowerOf2 n =
   in lg
 
 
-
 filterDif :: [(Int, Int)] -> [Int]
 filterDif []  = []
 filterDif ((x, occurance):rest)
-  
   | not ((fromIntegral byte_len - ( (isPowerOf2 x ) )) == (fromIntegral (div occurance 2)) ) = filterDif rest
   | otherwise = x : filterDif rest
+
+filterDifSinister :: [(Int, Int)] -> [Int]
+filterDifSinister []  = []
+filterDifSinister ((x, occurance):rest)
+  | x == 1 = x : filterDifSinister rest -- may the gods forgive me
+  | not ((fromIntegral byte_len - ( (isPowerOf2 x ) )) == (fromIntegral (div occurance 2)) ) = filterDifSinister rest
+  | otherwise = x : filterDifSinister rest
 
 
 
@@ -146,13 +151,23 @@ filterCloseMindeds (x:n)  r
  | isInnovative n x = filterCloseMindeds n  (x : r)
  | otherwise = filterCloseMindeds n  r
 
-k_map :: TruthTable -> Statement
-k_map (TruthTable n) =
+k_map :: TruthTable -> ([(Int, Int)] -> [Int]) -> Statement
+k_map (TruthTable n) filt =
 
   if (length n) == 1 then (Statement [((constructExpression . (map defaultBase3) . getBit . head . filterTruth) (TruthTable n))])
   else
     let k = (toList ( storeDifs (filterTruth (TruthTable n)) empty))
-    in Statement (map constructExpression (filterCloseMindeds ( ( map base3ToList) ( survivalOfTheFittest  (( filterDif . toList) (storeOccurence k empty) ) k)) []))
+    in Statement (map constructExpression (filterCloseMindeds ( ( map base3ToList) ( survivalOfTheFittest  (( filt . toList) (storeOccurence k empty) ) k)) []))
+
+
+
+k_M :: TruthTable -> Statement
+k_M n = do
+ let w = k_map n filterDif
+ 
+ if w == (Statement []) then k_map n filterDifSinister
+ else w
+ 
 
 defaultBase3 :: Bool -> Int
 defaultBase3 n = boolToBase3 n 1
@@ -163,7 +178,7 @@ main = do
   --allTruthTables <- strToNum filePath
   
   --let idk = createTruthTablesForByte allTruthTables
-  let t = TruthTable [(Byte [True, False, False], True), (Byte [True, True, True], True), (Byte [True, True, False], True)]
+  let t = TruthTable [(Byte [True, False, False], True), (Byte [True, True, True], True), (Byte [True, True, False], True), (Byte [True, False, True], True)]
 
   --print ( ((map defaultBase3) . getBit . head . filterTruth) t)
 
@@ -177,7 +192,7 @@ main = do
 
   --print r
   
-  print (k_map t)
+  print (k_M t)
 
   --print (map k_map idk)
 
