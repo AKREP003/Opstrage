@@ -90,7 +90,7 @@ isPowerOf2 n =
 filterDif :: [(Int, Int)] -> [Int]
 filterDif []  = []
 filterDif ((x, occurance):rest)
-  | x == 1 = x : filterDif rest -- may the gods forgive me
+  
   | not ((fromIntegral byte_len - ( (isPowerOf2 x ) )) == (fromIntegral (div occurance 2)) ) = filterDif rest
   | otherwise = x : filterDif rest
 
@@ -159,11 +159,11 @@ defaultBase3 n = boolToBase3 n 1
 
 main :: IO ()
 main = do
-  let filePath = "C:/Users/aliek/Desktop/hello.txt"  -- Replace with your actual file path
-  allTruthTables <- strToNum filePath
+  --let filePath = "C:/Users/aliek/Desktop/hello.txt"  -- Replace with your actual file path
+  --allTruthTables <- strToNum filePath
   
-  let idk = createTruthTablesForByte allTruthTables
-  --let t = TruthTable [(Byte [False, False, False], True), (Byte [True, True, True], True)]
+  --let idk = createTruthTablesForByte allTruthTables
+  let t = TruthTable [(Byte [True, False, False], True), (Byte [True, True, True], True), (Byte [True, True, False], True)]
 
   --print ( ((map defaultBase3) . getBit . head . filterTruth) t)
 
@@ -177,9 +177,9 @@ main = do
 
   --print r
   
-  --print (k_map t)
+  print (k_map t)
 
-  print (map k_map idk)
+  --print (map k_map idk)
 
 
   --print (encodeByte (Byte [True, False, True]) 1)
