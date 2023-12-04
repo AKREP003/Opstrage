@@ -2,7 +2,8 @@ import Numeric
 import Data.Char
 import Prelude
 import Data.Hashable
-import Data.HashMap.Strict hiding (map)
+import Data.HashMap.Strict hiding (map, filter)
+import Data.List hiding (insert)
 
 newtype Byte = Byte [Bool] deriving (Show, Eq, Ord)
 
@@ -67,7 +68,7 @@ boolToBase3 n d
 encodeByte :: Byte -> Int -> [Int] -- Find a way to encode every fact about a Byte. and turn them into a list. Maybe base 3
 encodeByte (Byte []) _  = [0]
 encodeByte (Byte (x:n)) las  =
-  let r = encodeByte (Byte n) (las * 3)
+  let r = reverse (encodeByte (Byte n) (las * 3))
   in (map (+ (boolToBase3 x las)) r) ++ r
 
 
@@ -89,7 +90,7 @@ isPowerOf2 n =
 filterDif :: [(Int, Int)] -> [Int]
 filterDif []  = []
 filterDif ((x, occurance):rest)
-  | x == 1 = x : filterDif rest -- may the gods forgive me
+  
   | not ((fromIntegral byte_len - ( (isPowerOf2 x ) )) == (fromIntegral (div occurance 2)) ) = filterDif rest
   | otherwise = x : filterDif rest
 
@@ -104,14 +105,57 @@ storeOccurence ((_, o):n) h = storeOccurence n (logDif h o)
 survivalOfTheFittest :: [Int] -> [(Int, Int)] -> [Int]
 survivalOfTheFittest _ [] = []
 survivalOfTheFittest fit ((x, o):n)
- | o `elem` fit  = x : survivalOfTheFittest fit n
+ | (x /= 0 ) && (o `elem` fit)  = x : survivalOfTheFittest fit n
  | otherwise = survivalOfTheFittest fit n
 
 
-k_map :: TruthTable -> Int
-k_map n =
-  let k = (toList ( storeDifs (filterTruth n) empty))
-  in (maximum ) ( survivalOfTheFittest  (( filterDif . toList) (storeOccurence k empty) ) k)
+base3ToList :: Int -> [Int]
+base3ToList n
+  | n < 0     = error "Input must be a non-negative integer."
+  | n == 0    = replicate (byte_len)  0
+  | otherwise = 
+    let x = reverse $ unfoldr (\x -> if x == 0 then Nothing else Just (x `mod` 3, x `div` 3)) n
+
+    in reverse (replicate (byte_len - length x)  0 ++ x  )
+isUsed :: [Int] -> [Bool]
+isUsed = map (> 0)
+
+isFlipped :: [Int] -> [Bool]
+isFlipped = map (== 1)
+
+constructExpression :: [Int] -> Expression
+constructExpression n = Expression (Byte (isUsed n), Byte (isFlipped n))
+
+compareInnovation :: [Int] -> [Int] -> Bool
+compareInnovation [] _ = False
+compareInnovation _ [] = False
+compareInnovation (x:n1) (y:n2)
+ | (x /= 0) && (x /= y) = True
+ | otherwise = compareInnovation n1 n2
+
+
+isInnovative :: [[Int]] -> [Int] -> Bool
+isInnovative [] _ = True
+isInnovative (y:n) x
+  | not (compareInnovation x y) = False
+  | otherwise = isInnovative n x
+
+filterCloseMindeds :: [[Int]]  -> [[Int]] -> [[Int]]
+filterCloseMindeds [ ]  r = r
+filterCloseMindeds (x:n)  r
+ | isInnovative n x = filterCloseMindeds n  (x : r)
+ | otherwise = filterCloseMindeds n  r
+
+k_map :: TruthTable -> Statement
+k_map (TruthTable n) =
+
+  if (length n) == 1 then (Statement [((constructExpression . (map defaultBase3) . getBit . head . filterTruth) (TruthTable n))])
+  else 
+    let k = (toList ( storeDifs (filterTruth (TruthTable n)) empty))
+    in Statement (map constructExpression (filterCloseMindeds ( ( map base3ToList) ( survivalOfTheFittest  (( filterDif . toList) (storeOccurence k empty) ) k)) []))
+
+defaultBase3 :: Bool -> Int
+defaultBase3 n = boolToBase3 n 1
 
 main :: IO ()
 main = do
@@ -119,11 +163,26 @@ main = do
   --allTruthTables <- strToNum filePath
   
   --let idk = createTruthTablesForByte allTruthTables
-  let t = TruthTable [(Byte [True, False, True], True)]
+  let t = TruthTable [(Byte [True, False, False], True)]
+
+  --print ( ((map defaultBase3) . getBit . head . filterTruth) t) 
+
+
+
+  let k = (toList ( storeDifs (filterTruth t) empty))
+
+  print k
   
-
-
+  let r = map base3ToList ( survivalOfTheFittest  (( filterDif . toList) (storeOccurence k empty) ) k)
+  
+  print r
+  
   print (k_map t)
+  
+  print (compareInnovation [2,0,0] [1,2,0])
+  
+  print (encodeByte (Byte [True, False, True]) 1 )
+  
 
 
 
