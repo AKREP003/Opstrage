@@ -90,7 +90,7 @@ isPowerOf2 n =
 filterDif :: [(Int, Int)] -> [Int]
 filterDif []  = []
 filterDif ((x, occurance):rest)
-  
+  | x == 1 = x : filterDif rest -- may the gods forgive me
   | not ((fromIntegral byte_len - ( (isPowerOf2 x ) )) == (fromIntegral (div occurance 2)) ) = filterDif rest
   | otherwise = x : filterDif rest
 
@@ -150,7 +150,7 @@ k_map :: TruthTable -> Statement
 k_map (TruthTable n) =
 
   if (length n) == 1 then (Statement [((constructExpression . (map defaultBase3) . getBit . head . filterTruth) (TruthTable n))])
-  else 
+  else
     let k = (toList ( storeDifs (filterTruth (TruthTable n)) empty))
     in Statement (map constructExpression (filterCloseMindeds ( ( map base3ToList) ( survivalOfTheFittest  (( filterDif . toList) (storeOccurence k empty) ) k)) []))
 
@@ -159,31 +159,27 @@ defaultBase3 n = boolToBase3 n 1
 
 main :: IO ()
 main = do
-  --let filePath = "C:/Users/aliek/Desktop/hello.txt"  -- Replace with your actual file path
-  --allTruthTables <- strToNum filePath
+  let filePath = "C:/Users/aliek/Desktop/hello.txt"  -- Replace with your actual file path
+  allTruthTables <- strToNum filePath
   
-  --let idk = createTruthTablesForByte allTruthTables
-  let t = TruthTable [(Byte [True, False, False], True)]
+  let idk = createTruthTablesForByte allTruthTables
+  --let t = TruthTable [(Byte [False, False, False], True), (Byte [True, True, True], True)]
 
-  --print ( ((map defaultBase3) . getBit . head . filterTruth) t) 
+  --print ( ((map defaultBase3) . getBit . head . filterTruth) t)
 
 
 
-  let k = (toList ( storeDifs (filterTruth t) empty))
+  --let k = (toList ( storeDifs (filterTruth t) empty))
 
-  print k
-  
-  let r = map base3ToList ( survivalOfTheFittest  (( filterDif . toList) (storeOccurence k empty) ) k)
-  
-  print r
-  
-  print (k_map t)
-  
-  print (compareInnovation [2,0,0] [1,2,0])
-  
-  print (encodeByte (Byte [True, False, True]) 1 )
-  
+  --print k
 
+  --let r = map base3ToList ( survivalOfTheFittest  (( filterDif . toList) (storeOccurence k empty) ) k)
+
+  --print r
+  
+  --print (k_map t)
+
+  print (map k_map idk)
 
 
   --print (encodeByte (Byte [True, False, True]) 1)
